@@ -150,7 +150,9 @@ class ResNet(nn.Module):
         
         if self.fully_conv:
             self.avgpool = nn.AvgPool2d(7, padding=3, stride=1)
-            self.fc = nn.Conv2d(512 * block.expansion, num_classes, 1)
+            # In the latest unstable torch 4.0 the tensor.copy_
+            # method was changed and doesn't work as it used to be
+            #self.fc = nn.Conv2d(512 * block.expansion, num_classes, 1)
 
         for m in self.modules():
             if isinstance(m, nn.Conv2d):
