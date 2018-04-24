@@ -146,6 +146,7 @@ class ResNet(nn.Module):
         self.layer4 = self._make_layer(block, 512, layers[3], stride=2)
         
         self.avgpool = nn.AvgPool2d(7)
+
         self.fc = nn.Linear(512 * block.expansion, num_classes)
         
         if self.fully_conv:

@@ -9,6 +9,9 @@ from .utils import download_url, check_integrity
 
 class SVHN(data.Dataset):
     """`SVHN <http://ufldl.stanford.edu/housenumbers/>`_ Dataset.
+    Note: The SVHN dataset assigns the label `10` to the digit `0`. However, in this Dataset,
+    we assign the label `0` to the digit `0` to be compatible with PyTorch loss functions which
+    expect the class labels to be in the range `[0, C-1]`
 
     Args:
         root (string): Root directory of dataset where directory
@@ -38,7 +41,7 @@ class SVHN(data.Dataset):
 
     def __init__(self, root, split='train',
                  transform=None, target_transform=None, download=False):
-        self.root = root
+        self.root = os.path.expanduser(root)
         self.transform = transform
         self.target_transform = target_transform
         self.split = split  # training set or test set or extra set
@@ -63,10 +66,19 @@ class SVHN(data.Dataset):
         import scipy.io as sio
 
         # reading(loading) mat file as array
-        loaded_mat = sio.loadmat(os.path.join(root, self.filename))
+        loaded_mat = sio.loadmat(os.path.join(self.root, self.filename))
 
         self.data = loaded_mat['X']
-        self.labels = loaded_mat['y']
+        # loading from the .mat file gives an np array of type np.uint8
+        # converting to np.int64, so that we have a LongTensor after
+        # the conversion from the numpy array
+        # the squeeze is needed to obtain a 1D tensor
+        self.labels = loaded_mat['y'].astype(np.int64).squeeze()
+
+        # the svhn dataset assigns the class label "10" to the digit 0
+        # this makes it inconsistent with several loss functions
+        # which expect the class labels to be in the range [0, C-1]
+        np.place(self.labels, self.labels == 10, 0)
         self.data = np.transpose(self.data, (3, 2, 0, 1))
 
     def __getitem__(self, index):
@@ -77,7 +89,7 @@ class SVHN(data.Dataset):
         Returns:
             tuple: (image, target) where target is index of the target class.
         """
-        img, target = self.data[index], self.labels[index]
+        img, target = self.data[index], int(self.labels[index])
 
         # doing this so that it is consistent with all other datasets
         # to return a PIL Image
@@ -103,3 +115,14 @@ class SVHN(data.Dataset):
     def download(self):
         md5 = self.split_list[self.split][2]
         download_url(self.url, self.root, self.filename, md5)
+
+    def __repr__(self):
+        fmt_str = 'Dataset ' + self.__class__.__name__ + '\n'
+        fmt_str += '    Number of datapoints: {}\n'.format(self.__len__())
+        fmt_str += '    Split: {}\n'.format(self.split)
+        fmt_str += '    Root Location: {}\n'.format(self.root)
+        tmp = '    Transforms (if any): '
+        fmt_str += '{0}{1}\n'.format(tmp, self.transform.__repr__().replace('\n', '\n' + ' ' * len(tmp)))
+        tmp = '    Target Transforms (if any): '
+        fmt_str += '{0}{1}'.format(tmp, self.target_transform.__repr__().replace('\n', '\n' + ' ' * len(tmp)))
+        return fmt_str
