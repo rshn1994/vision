@@ -23,11 +23,8 @@ model_urls = {
 
 class VGG(nn.Module):
 
-<<<<<<< HEAD
     def __init__(self, features, num_classes=1000, fully_conv=False):
-=======
-    def __init__(self, features, num_classes=1000, init_weights=True):
->>>>>>> upstream/master
+
         super(VGG, self).__init__()
         self.features = features
         self.fully_conv = fully_conv
@@ -40,7 +37,7 @@ class VGG(nn.Module):
             nn.Dropout(),
             nn.Linear(4096, num_classes),
         )
-<<<<<<< HEAD
+        
         if fully_conv:
             self.classifier = nn.Sequential(
                 nn.Conv2d(512, 4096, 7, 1, 3),
@@ -52,10 +49,6 @@ class VGG(nn.Module):
                 nn.Conv2d(4096, num_classes, 1)
             )
         self._initialize_weights()
-=======
-        if init_weights:
-            self._initialize_weights()
->>>>>>> upstream/master
 
     def forward(self, x):
         x = self.features(x)
