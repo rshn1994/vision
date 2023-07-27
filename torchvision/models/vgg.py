@@ -23,9 +23,11 @@ model_urls = {
 
 class VGG(nn.Module):
 
-    def __init__(self, features, num_classes=1000):
+    def __init__(self, features, num_classes=1000, fully_conv=False):
+
         super(VGG, self).__init__()
         self.features = features
+        self.fully_conv = fully_conv
         self.classifier = nn.Sequential(
             nn.Linear(512 * 7 * 7, 4096),
             nn.ReLU(True),
@@ -35,11 +37,23 @@ class VGG(nn.Module):
             nn.Dropout(),
             nn.Linear(4096, num_classes),
         )
+        
+        if fully_conv:
+            self.classifier = nn.Sequential(
+                nn.Conv2d(512, 4096, 7, 1, 3),
+                nn.ReLU(True),
+                nn.Dropout(),
+                nn.Conv2d(4096, 4096, 1),
+                nn.ReLU(True),
+                nn.Dropout(),
+                nn.Conv2d(4096, num_classes, 1)
+            )
         self._initialize_weights()
 
     def forward(self, x):
         x = self.features(x)
-        x = x.view(x.size(0), -1)
+        if not self.fully_conv:
+            x = x.view(x.size(0), -1)
         x = self.classifier(x)
         return x
 
@@ -54,7 +68,6 @@ class VGG(nn.Module):
                 m.weight.data.fill_(1)
                 m.bias.data.zero_()
             elif isinstance(m, nn.Linear):
-                n = m.weight.size(1)
                 m.weight.data.normal_(0, 0.01)
                 m.bias.data.zero_()
 
@@ -89,6 +102,8 @@ def vgg11(pretrained=False, **kwargs):
     Args:
         pretrained (bool): If True, returns a model pre-trained on ImageNet
     """
+    if pretrained:
+        kwargs['init_weights'] = False
     model = VGG(make_layers(cfg['A']), **kwargs)
     if pretrained:
         model.load_state_dict(model_zoo.load_url(model_urls['vgg11']))
@@ -101,6 +116,8 @@ def vgg11_bn(pretrained=False, **kwargs):
     Args:
         pretrained (bool): If True, returns a model pre-trained on ImageNet
     """
+    if pretrained:
+        kwargs['init_weights'] = False
     model = VGG(make_layers(cfg['A'], batch_norm=True), **kwargs)
     if pretrained:
         model.load_state_dict(model_zoo.load_url(model_urls['vgg11_bn']))
@@ -113,6 +130,8 @@ def vgg13(pretrained=False, **kwargs):
     Args:
         pretrained (bool): If True, returns a model pre-trained on ImageNet
     """
+    if pretrained:
+        kwargs['init_weights'] = False
     model = VGG(make_layers(cfg['B']), **kwargs)
     if pretrained:
         model.load_state_dict(model_zoo.load_url(model_urls['vgg13']))
@@ -125,6 +144,8 @@ def vgg13_bn(pretrained=False, **kwargs):
     Args:
         pretrained (bool): If True, returns a model pre-trained on ImageNet
     """
+    if pretrained:
+        kwargs['init_weights'] = False
     model = VGG(make_layers(cfg['B'], batch_norm=True), **kwargs)
     if pretrained:
         model.load_state_dict(model_zoo.load_url(model_urls['vgg13_bn']))
@@ -137,6 +158,8 @@ def vgg16(pretrained=False, **kwargs):
     Args:
         pretrained (bool): If True, returns a model pre-trained on ImageNet
     """
+    if pretrained:
+        kwargs['init_weights'] = False
     model = VGG(make_layers(cfg['D']), **kwargs)
     if pretrained:
         model.load_state_dict(model_zoo.load_url(model_urls['vgg16']))
@@ -149,6 +172,8 @@ def vgg16_bn(pretrained=False, **kwargs):
     Args:
         pretrained (bool): If True, returns a model pre-trained on ImageNet
     """
+    if pretrained:
+        kwargs['init_weights'] = False
     model = VGG(make_layers(cfg['D'], batch_norm=True), **kwargs)
     if pretrained:
         model.load_state_dict(model_zoo.load_url(model_urls['vgg16_bn']))
@@ -161,6 +186,8 @@ def vgg19(pretrained=False, **kwargs):
     Args:
         pretrained (bool): If True, returns a model pre-trained on ImageNet
     """
+    if pretrained:
+        kwargs['init_weights'] = False
     model = VGG(make_layers(cfg['E']), **kwargs)
     if pretrained:
         model.load_state_dict(model_zoo.load_url(model_urls['vgg19']))
@@ -173,6 +200,8 @@ def vgg19_bn(pretrained=False, **kwargs):
     Args:
         pretrained (bool): If True, returns a model pre-trained on ImageNet
     """
+    if pretrained:
+        kwargs['init_weights'] = False
     model = VGG(make_layers(cfg['E'], batch_norm=True), **kwargs)
     if pretrained:
         model.load_state_dict(model_zoo.load_url(model_urls['vgg19_bn']))
